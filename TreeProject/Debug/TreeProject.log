@@ -1,0 +1,9 @@
+﻿  Entity.cpp
+d:\workspace\cpsc_589\treeproject\treeproject\src\managers\graphics\graphicsmanager.h(35): warning C4305: 'initializing': truncation from 'double' to 'float'
+d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(119): warning C4018: '<': signed/unsigned mismatch
+d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(129): warning C4018: '<': signed/unsigned mismatch
+d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(221): warning C4018: '<': signed/unsigned mismatch
+d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(222): warning C4018: '<': signed/unsigned mismatch
+d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(229): warning C4018: '<': signed/unsigned mismatch
+  TreeProject.vcxproj -> D:\Workspace\CPSC_589\TreeProject\Debug\TreeProject.exe
+  TreeProject.vcxproj -> D:\Workspace\CPSC_589\TreeProject\Debug\TreeProject.pdb (Partial PDB)
