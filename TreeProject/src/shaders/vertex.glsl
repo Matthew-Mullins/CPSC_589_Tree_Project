@@ -2,8 +2,7 @@
 
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPositionModel;
-layout(location = 1) in vec3 vertexColor;
-layout(location = 2) in vec3 vertexNormalModel;
+layout(location = 1) in vec3 vertexNormalModel;
 
 //Output Data
 out vec3 vertexPositionWorld;
@@ -17,6 +16,7 @@ uniform mat4 MVP;
 uniform mat4 V;
 uniform mat4 M;
 uniform vec3 lightPositionWorld;
+uniform vec3 objectColor;
 
 void main(){
 
@@ -32,6 +32,6 @@ void main(){
 
 	vertexNormalCamera = mat3(transpose(inverse(V * M))) * vertexNormalModel;
 
-	colour = vertexColor;
+	colour = objectColor;
 }
 

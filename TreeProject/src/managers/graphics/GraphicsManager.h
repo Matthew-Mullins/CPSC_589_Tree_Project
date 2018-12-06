@@ -81,6 +81,7 @@ private:
 	GLuint viewMatrixId;
 	GLuint modelMatrixId;
 	GLuint lightId;
+	GLuint objectColorId;
 
 	Camera* camera;
 	std::vector<Entity*> entities;
