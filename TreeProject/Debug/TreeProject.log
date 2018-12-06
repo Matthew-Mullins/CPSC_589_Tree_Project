@@ -9,6 +9,5 @@ d:\workspace\cpsc_589\treeproject\treeproject\src\entities\entity.cpp(229): warn
   Skipping... (no relevant changes detected)
   GraphicsManager.cpp
   main.cpp
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   TreeProject.vcxproj -> D:\Workspace\CPSC_589\TreeProject\Debug\TreeProject.exe
   TreeProject.vcxproj -> D:\Workspace\CPSC_589\TreeProject\Debug\TreeProject.pdb (Partial PDB)
