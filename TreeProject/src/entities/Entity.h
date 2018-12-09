@@ -2,6 +2,10 @@
 #include <vector>
 #include <map>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cmath>
+
 #include <GL/glew.h>
 
 #include "../../../include/imgui/imgui.h"
@@ -34,11 +38,13 @@ private:
 	int fractalIndex = 4;
 	glm::vec3 objectColor = glm::vec3(0.0f, 0.5f, 0.0f);
 
+	std::vector<bool> isTip;
 	//std::vector<float> diameters;
 	std::string variables[2] = {"X", "F"};
 	std::string constants[6] = { "/", "*", "-", "+", "[", "]" };
 	std::string start = "X";
 	std::string skeleton;
+	float angle = M_PI_2;
 	std::map<char, std::string> rules;
 	std::vector<std::string> fractalPatterns;
 	

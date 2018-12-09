@@ -3,6 +3,7 @@
 #include <string>
 #include <stdlib.h>
 #include <iostream>
+#include <algorithm>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -19,7 +20,7 @@ Entity::Entity(Transform* _transform) : transform(_transform) {
 
 	//Create Circle Sweep Surface
 	for (float u = 0.0f; u < 2 * M_PI; u += 0.5f) {
-		sweepSurface.push_back(glm::vec3(0.01f * cos(u), 0.0f, 0.01f * sin(u)));
+		sweepSurface.push_back(glm::vec3(0.01f * cos(u), 0.01f * sin(u), 0.0f));
 	}
 
 	//Bind VAO, NBO
@@ -131,6 +132,9 @@ void Entity::GenerateFractals() {
 		}
 		fractalPatterns.push_back(next);
 	}
+	for (int i = 0; i < numberIterations; i++) {
+		fractalPatterns[i].erase(std::remove(fractalPatterns[i].begin(), fractalPatterns[i].end(), 'X'), fractalPatterns[i].end());
+	}
 }
 
 //Load and Cache Fractal Vertices
@@ -139,6 +143,8 @@ void Entity::LoadFractal() {
 	srand(seed);
 	//Clear Previous Vertices
 	vertexBufferData.clear();
+	vertexDirectionData.clear();
+	isTip.clear();
 	//Fractal Starting Values
 	glm::vec3 startPosition = glm::vec3(0.0f);
 	glm::vec3 startDirection = Transform::UP;
@@ -147,41 +153,49 @@ void Entity::LoadFractal() {
 	glm::vec3 currentPosition = startPosition;
 	glm::vec3 currentDirection = startDirection;
 	//float currentDiameter = startDiameter;
-	glm::vec3 nextPosition;
 	//Fractal Constants
-	const float lineLength = 0.02f;
+	const float lineLength = 0.1f / (float)fractalIndex;
 	//Fractal Variables
 	std::vector<glm::vec3> returnPositions;
 	std::vector<glm::vec3> returnDirections;
 	//std::vector<float> returnDiameters;
 	//Main Loop
-	for (char c : fractalPatterns[fractalIndex]) {
+	//for (char c : fractalPatterns[fractalIndex]) {
 		//vertexBufferData.push_back(currentPosition);
+	vertexBufferData.push_back(currentPosition);
+	vertexDirectionData.push_back(currentDirection);
+	isTip.push_back(false);
+	for (int i = 0; i < fractalPatterns[fractalIndex].size(); i++) {
+		char c = fractalPatterns[fractalIndex][i];
 		switch (c) {
 		case 'F':
 			//Move Forward, Caching New Position, and Direction
-			nextPosition = currentPosition + (lineLength * currentDirection);
-			currentPosition = nextPosition;
+			currentPosition = currentPosition + (lineLength * currentDirection);
 			vertexBufferData.push_back(currentPosition);
 			vertexDirectionData.push_back(currentDirection);
+			if (fractalPatterns[fractalIndex][i + 1] == ']' || i == fractalPatterns[fractalIndex].size() - 1) {
+				isTip.push_back(true);
+			} else {
+				isTip.push_back(false);
+			}
 			//diameters.push_back(currentDiameter);
 			//currentDiameter *= 0.99f;
 			break;
 		case '+':
 			//Rotate Random Amount in X Direction
-			currentDirection = glm::normalize(glm::vec3(currentDirection.x + (float)rand() / RAND_MAX, currentDirection.y, currentDirection.z));
+			currentDirection = glm::normalize(glm::rotate(((float)rand() / RAND_MAX) * angle, Transform::RIGHT) * glm::vec4(currentDirection, 0.0f)); //glm::normalize(glm::vec3(currentDirection.x + (float)rand() / RAND_MAX, currentDirection.y, currentDirection.z));
 			break;
 		case '-':
 			//Rotate Random Amount in X Direction
-			currentDirection = glm::normalize(glm::vec3(currentDirection.x - (float)rand() / RAND_MAX, currentDirection.y, currentDirection.z));
+			currentDirection = glm::normalize(glm::rotate(((float)rand() / RAND_MAX) * -angle, Transform::RIGHT) * glm::vec4(currentDirection, 0.0f)); //glm::normalize(glm::vec3(currentDirection.x - (float)rand() / RAND_MAX, currentDirection.y, currentDirection.z));
 			break;
 		case '/':
 			//Rotate Random Amount in Z Direction
-			currentDirection = glm::normalize(glm::vec3(currentDirection.x, currentDirection.y, currentDirection.z - (float)rand() / RAND_MAX));
+			currentDirection = glm::normalize(glm::rotate(((float)rand() / RAND_MAX) * -angle, Transform::FORWARD) * glm::vec4(currentDirection, 0.0f)); //glm::normalize(glm::vec3(currentDirection.x, currentDirection.y, currentDirection.z - (float)rand() / RAND_MAX));
 			break;
 		case '*':
 			//Rotate Random Amount in Z Direction
-			currentDirection = glm::normalize(glm::vec3(currentDirection.x, currentDirection.y, currentDirection.z + (float)rand() / RAND_MAX));
+			currentDirection = glm::normalize(glm::rotate(((float)rand() / RAND_MAX) * angle, Transform::FORWARD) * glm::vec4(currentDirection, 0.0f)); //glm::normalize(glm::vec3(currentDirection.x, currentDirection.y, currentDirection.z + (float)rand() / RAND_MAX));
 			break;
 		case'[':
 			//Cache Position and Direction
@@ -195,6 +209,13 @@ void Entity::LoadFractal() {
 			returnPositions.pop_back();
 			currentDirection = returnDirections.back();
 			returnDirections.pop_back();
+			vertexBufferData.push_back(currentPosition);
+			vertexDirectionData.push_back(currentDirection);
+			if (fractalPatterns[fractalIndex][i + 1] == ']' || i == fractalPatterns[fractalIndex].size() - 1) {
+				isTip.push_back(true);
+			} else {
+				isTip.push_back(false);
+			}
 			//currentDiameter = 0.90f * returnDiameters.back();
 			//returnDiameters.pop_back();
 			break;
@@ -207,33 +228,49 @@ void Entity::LoadFractal() {
 void Entity::LoadSweep() {
 	//Store Fractal Verticies Temporarily
 	std::vector<glm::vec3> tmpVertexBufferData = vertexBufferData;
+	std::vector<bool> tmpTips = isTip;
+	float tipValue = 1.0f;
 	//Clear Vertices
 	vertexBufferData.clear();
+	vertexIndicesData.clear();
+	isTip.clear();
 	//For Each Temporary Vertex, Add Sweep Surface
 	for (int i = 0; i < tmpVertexBufferData.size(); i++) {
 		//Push Back Each Vertex From Sweep Surface
+		if (tmpTips[i]) {
+			tipValue = 0.0001f;
+		} else {
+			tipValue = 1.0f;
+		}
 		for (int j = 0; j < sweepSurface.size(); j++) {
+			glm::mat4 rotation = glm::inverse(glm::lookAt(glm::vec3(0.0f), vertexDirectionData[i], Transform::UP));
+			if (vertexDirectionData[i] == Transform::UP) {
+				rotation = glm::inverse(glm::lookAt(glm::vec3(0.0f), vertexDirectionData[i], Transform::FORWARD));
+			}
 			//Sweep Surface Shifted by Fractal "Center"
-			vertexBufferData.push_back(/*diameters[i] * glm::vec3(glm::lookAt(glm::vec3(0.0f), vertexDirectionData[i], Transform::UP) * glm::vec4(sweepSurface[j], 0.0f)) + tmpVertexBufferData[i]*/ sweepSurface[j] + tmpVertexBufferData[i]);
+			vertexBufferData.push_back(glm::vec3(rotation * glm::vec4(tipValue * sweepSurface[j], 0.0f)) + tmpVertexBufferData[i]);
+			isTip.push_back(tmpTips[i]);
 		}
 	}
 
 	//Fill Indices Buffer
 	for (int i = 0; i < vertexBufferData.size() - sweepSurface.size() - 1; i++) {
-		if ((i + 1) % (sweepSurface.size()) == 0) {
-			vertexIndicesData.push_back(i);
-			vertexIndicesData.push_back(i + sweepSurface.size());
-			vertexIndicesData.push_back(i + 1);
-			vertexIndicesData.push_back(i);
-			vertexIndicesData.push_back(i + 1);
-			vertexIndicesData.push_back(i - sweepSurface.size() + 1);
-		} else {
-			vertexIndicesData.push_back(i);
-			vertexIndicesData.push_back(i + sweepSurface.size());
-			vertexIndicesData.push_back(i + sweepSurface.size() + 1);
-			vertexIndicesData.push_back(i);
-			vertexIndicesData.push_back(i + sweepSurface.size() + 1);
-			vertexIndicesData.push_back(i + 1);
+		if (!isTip[i]) {
+			if ((i + 1) % (sweepSurface.size()) == 0) {
+				vertexIndicesData.push_back(i);
+				vertexIndicesData.push_back(i + sweepSurface.size());
+				vertexIndicesData.push_back(i + 1);
+				vertexIndicesData.push_back(i);
+				vertexIndicesData.push_back(i + 1);
+				vertexIndicesData.push_back(i - sweepSurface.size() + 1);
+			} else {
+				vertexIndicesData.push_back(i);
+				vertexIndicesData.push_back(i + sweepSurface.size());
+				vertexIndicesData.push_back(i + sweepSurface.size() + 1);
+				vertexIndicesData.push_back(i);
+				vertexIndicesData.push_back(i + sweepSurface.size() + 1);
+				vertexIndicesData.push_back(i + 1);
+			}
 		}
 	}
 
